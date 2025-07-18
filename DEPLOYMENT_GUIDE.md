@@ -40,6 +40,9 @@ Even without camelot, ResearchMiner maintains full functionality:
 
 ### Table Extraction Methods:
 1. **tabula-py**: Java-based, excellent for structured tables
+   - **Auto-downloads** required JAR files on first run
+   - **No manual setup** needed - handles Java dependencies automatically
+   - Works on most deployment platforms with built-in Java support
 2. **pdfplumber**: Native Python, good for most table formats
 3. **Manual fallback**: Text-based table extraction
 
@@ -93,7 +96,9 @@ OPENAI_API_KEY=your_openai_api_key_here
 1. Check Python version (use 3.10 or 3.11)
 2. Use requirements-deploy.txt instead of requirements.txt
 3. Remove any camelot references temporarily
-4. Ensure Java is available for tabula-py
+4. Java for tabula-py: Usually available by default on deployment platforms
+   - **First run**: tabula-py auto-downloads JAR files (may take 30-60 seconds)
+   - **Subsequent runs**: Uses cached files (fast startup)
 
 ### Alternative minimal requirements:
 If issues persist, use this minimal set:
