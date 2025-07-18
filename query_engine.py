@@ -15,7 +15,63 @@ class QueryEngine:
         # do not change this unless explicitly requested by the user
         self.model = "gpt-4o"
     
-    def process_query(self, query: str, query_type: str, relevant_chunks: List[Dict], documents: Dict) -> Dict:
+    def auto_detect_query_type(self, query: str) -> str:
+        """
+        Automatically detect the query type based on the content and keywords
+        
+        Args:
+            query: The user's question
+            
+        Returns:
+            String indicating the detected query type
+        """
+        query_lower = query.lower()
+        
+        # Keywords that indicate specific query types
+        comparison_keywords = ['compare', 'comparison', 'difference', 'between', 'versus', 'vs', 'contrast', 'similar', 'different', 'both papers', 'across papers']
+        methodology_keywords = ['methodology', 'method', 'approach', 'technique', 'algorithm', 'framework', 'implementation', 'how did', 'how do', 'procedure', 'process', 'steps']
+        results_keywords = ['results', 'findings', 'performance', 'accuracy', 'evaluation', 'metrics', 'score', 'outcome', 'experiment', 'test', 'benchmark']
+        conclusion_keywords = ['conclusion', 'conclude', 'summary', 'summarize', 'takeaway', 'main points', 'key findings', 'implications', 'significance']
+        
+        # Count keyword matches for each category
+        comparison_score = sum(1 for keyword in comparison_keywords if keyword in query_lower)
+        methodology_score = sum(1 for keyword in methodology_keywords if keyword in query_lower)
+        results_score = sum(1 for keyword in results_keywords if keyword in query_lower)
+        conclusion_score = sum(1 for keyword in conclusion_keywords if keyword in query_lower)
+        
+        # Determine query type based on highest score
+        scores = {
+            'Cross-Paper Comparison': comparison_score,
+            'Methodology Summary': methodology_score,
+            'Results Extraction': results_score,
+            'Conclusion Summary': conclusion_score
+        }
+        
+        # Find the highest scoring category
+        max_score = max(scores.values())
+        
+        # If multiple categories tie or no clear category, use additional logic
+        if max_score == 0:
+            # No specific keywords found, check for general patterns
+            if any(word in query_lower for word in ['what', 'explain', 'describe', 'tell me about']):
+                return 'Direct Content Lookup'
+            else:
+                return 'General Question'
+        elif max_score == 1 and list(scores.values()).count(max_score) > 1:
+            # Tie between categories, use secondary criteria
+            if 'compare' in query_lower or 'between' in query_lower:
+                return 'Cross-Paper Comparison'
+            elif 'how' in query_lower:
+                return 'Methodology Summary'
+            elif 'result' in query_lower:
+                return 'Results Extraction'
+            else:
+                return 'Direct Content Lookup'
+        else:
+            # Clear winner
+            return max(scores, key=scores.get)
+
+    def process_query(self, query: str, query_type: str = None, relevant_chunks: List[Dict] = None, documents: Dict = None) -> Dict:
         """
         Process a user query and generate a response
         
@@ -29,6 +85,11 @@ class QueryEngine:
             Dictionary containing the answer and sources
         """
         try:
+            # Auto-detect query type if not provided
+            if query_type is None:
+                query_type = self.auto_detect_query_type(query)
+                logging.info(f"Auto-detected query type: {query_type}")
+            
             # Prepare context from relevant chunks
             context = self._prepare_context(relevant_chunks)
             

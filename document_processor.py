@@ -1,20 +1,49 @@
 import PyPDF2
 import pdfplumber
-import tabula
 import pandas as pd
 from PIL import Image
 import io
 import re
 from typing import Dict, List, Optional
 import logging
+import warnings
 
-# Try to import camelot, but make it optional for deployment compatibility
+# Suppress common PDF processing warnings that don't affect functionality
+warnings.filterwarnings("ignore", message=".*Cannot set gray level.*")
+warnings.filterwarnings("ignore", message=".*Failed to import jpype.*")
+logging.getLogger('pdfminer.pdfinterp').setLevel(logging.ERROR)
+logging.getLogger('tabula.backend').setLevel(logging.ERROR)
+
+# Try to import optional table extraction libraries
+try:
+    # Try multiple import patterns for tabula-py
+    try:
+        import tabula.io as tabula_io
+        tabula_read_pdf = tabula_io.read_pdf
+        TABULA_AVAILABLE = True
+    except:
+        try:
+            from tabula.io import read_pdf as tabula_read_pdf
+            TABULA_AVAILABLE = True
+        except:
+            import tabula
+            tabula_read_pdf = tabula.read_pdf
+            TABULA_AVAILABLE = True
+except ImportError:
+    TABULA_AVAILABLE = False
+    logging.info("tabula-py not available - using pdfplumber for table extraction")
+
 try:
     import camelot
-    CAMELOT_AVAILABLE = True
+    # Test if camelot has the expected functionality
+    if hasattr(camelot, 'read_pdf'):
+        CAMELOT_AVAILABLE = True
+    else:
+        CAMELOT_AVAILABLE = False
+        logging.info("Camelot version incompatible - using pdfplumber for table extraction")
 except ImportError:
     CAMELOT_AVAILABLE = False
-    logging.warning("Camelot not available - using pdfplumber and tabula for table extraction")
+    logging.info("Camelot not available - using pdfplumber for table extraction")
 
 class DocumentProcessor:
     """Handles PDF processing, text extraction, and OCR"""
@@ -307,16 +336,17 @@ class DocumentProcessor:
         tables = []
         
         try:
-            # Method 1: Use tabula-py for table extraction
-            tabula_tables = self._extract_tables_tabula(pdf_path)
-            tables.extend(tabula_tables)
+            # Method 1: Use tabula-py for table extraction (if available and Java present)
+            if TABULA_AVAILABLE:
+                tabula_tables = self._extract_tables_tabula(pdf_path)
+                tables.extend(tabula_tables)
             
             # Method 2: Use camelot for better table detection (if available)
             if CAMELOT_AVAILABLE:
                 camelot_tables = self._extract_tables_camelot(pdf_path)
                 tables.extend(camelot_tables)
             
-            # Method 3: Use pdfplumber for table extraction
+            # Method 3: Use pdfplumber for table extraction (always available)
             pdfplumber_tables = self._extract_tables_pdfplumber(pdf_path)
             tables.extend(pdfplumber_tables)
             
@@ -326,11 +356,16 @@ class DocumentProcessor:
         return tables
     
     def _extract_tables_tabula(self, pdf_path: str) -> List[Dict]:
-        """Extract tables using tabula-py"""
+        """Extract tables using tabula-py (if available)"""
         tables = []
+        
+        if not TABULA_AVAILABLE:
+            logging.info("tabula-py not available, skipping tabula table extraction")
+            return tables
+            
         try:
             # Extract all tables from all pages
-            dfs = tabula.read_pdf(pdf_path, pages='all', multiple_tables=True)
+            dfs = tabula_read_pdf(pdf_path, pages='all', multiple_tables=True)
             
             for i, df in enumerate(dfs):
                 if not df.empty and df.shape[0] > 1:  # Has actual content
@@ -343,7 +378,11 @@ class DocumentProcessor:
                     })
                     
         except Exception as e:
-            logging.warning(f"Tabula table extraction failed: {str(e)}")
+            # Only log if it's not the expected Java unavailable error
+            if "java" not in str(e).lower():
+                logging.warning(f"Tabula table extraction failed: {str(e)}")
+            else:
+                logging.info("Tabula table extraction skipped (Java not available, using pdfplumber)")
         
         return tables
     

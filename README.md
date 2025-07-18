@@ -10,6 +10,18 @@ ResearchMiner is a sophisticated AI-powered research paper analysis system that 
 
 ## ✨ Core Features
 
+### 🤖 Smart Query Detection (NEW)
+- **Automatic Analysis**: AI automatically detects query type based on keywords and patterns
+- **Hybrid Interface**: Choose "Auto-Detect (Recommended)" or manually select specific analysis type  
+- **Smart Classification**: Identifies comparison, methodology, results, and conclusion queries
+- **User Control**: Override auto-detection when needed for precise control
+
+**Query Detection Examples:**
+- *"Compare the results of Paper A and B"* → Cross-Paper Comparison
+- *"What methodology was used?"* → Methodology Summary  
+- *"What are the main findings?"* → Results Extraction
+- *"Summarize the conclusions"* → Conclusion Summary
+
 ### 🔍 Multi-Strategy RAG System
 - **Semantic Search** (40% weight): TF-IDF with 10,000 features and trigrams for contextual understanding
 - **Keyword Search** (30% weight): Exact term matching with 5,000 features
@@ -23,6 +35,8 @@ ResearchMiner is a sophisticated AI-powered research paper analysis system that 
 - **Content Integration**: Unified text and table data processing
 
 ### 🤖 Intelligent Query Processing
+- **Smart Query Type Detection**: Automatic classification using keyword analysis and pattern matching
+- **Hybrid Query Interface**: Users can choose auto-detection or manual type selection
 - **Query Type Classification**: Handles comparison, methodology, results, and general queries
 - **Context-Aware Responses**: Optimized chunk selection and LLM processing
 - **Source Attribution**: Comprehensive citation tracking and metadata
@@ -76,7 +90,9 @@ ResearchMiner is a sophisticated AI-powered research paper analysis system that 
    - Efficient similarity calculations and result ranking
 
 3. **QueryEngine** (`query_engine.py`)
-   - Query type classification and routing
+   - **Smart Query Type Detection**: Automatic classification using keyword analysis
+   - **Hybrid Interface**: Auto-detection with manual override capability
+   - Query type classification and intelligent routing
    - Context-aware response generation with GPT-4o
    - Source attribution and citation formatting
    - Structured output with metadata and scoring
@@ -90,7 +106,7 @@ ResearchMiner is a sophisticated AI-powered research paper analysis system that 
 ### Prerequisites
 - Python 3.8+
 - OpenAI API key
-- Java Runtime Environment (for tabula-py table extraction)
+- Java Runtime Environment (optional - for enhanced table extraction)
 
 ### Installation
 ```bash
@@ -119,7 +135,7 @@ Access the application at `http://localhost:8501`
 
 #### Command Line Interface
 ```bash
-# Interactive mode
+# Interactive mode (with auto-detection)
 python cli.py interactive
 
 # Process single document
@@ -128,8 +144,11 @@ python cli.py process document.pdf
 # Process directory of documents
 python cli.py process-dir ./research_papers/
 
-# Direct query
+# Direct query (auto-detects query type)
 python cli.py query "What methodologies are used in machine learning studies?"
+
+# Manual query type specification
+python cli.py query "Compare results across papers" --query-type "Cross-Paper Comparison"
 ```
 
 ## 🔧 Technical Implementation
@@ -154,7 +173,8 @@ python cli.py query "What methodologies are used in machine learning studies?"
    - Metadata association
 
 4. **Query Processing**
-   - Query analysis and classification
+   - **Intelligent Query Type Detection**: Automatic analysis using keyword patterns
+   - **Hybrid User Interface**: Auto-detection or manual selection
    - Multi-strategy parallel search execution
    - Weighted result ranking
    - Context assembly for LLM processing
@@ -178,6 +198,15 @@ final_score = (0.4 * semantic_score +
 - **Semantic TF-IDF**: 10,000 features, trigrams, L2 normalization
 - **Keyword TF-IDF**: 5,000 features, unigrams for exact matching
 - **Fuzzy Search**: Jaccard similarity with phrase boosting
+
+**Query Detection Algorithm:**
+```python
+# Keyword-based scoring for automatic detection
+comparison_keywords = ['compare', 'comparison', 'between', 'versus', 'contrast']
+methodology_keywords = ['methodology', 'method', 'approach', 'algorithm', 'framework']  
+results_keywords = ['results', 'findings', 'performance', 'accuracy', 'evaluation']
+conclusion_keywords = ['conclusion', 'summary', 'takeaway', 'implications']
+```
 
 ## 🆚 Framework Comparison: Custom vs LangChain/LangGraph
 

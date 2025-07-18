@@ -96,18 +96,30 @@ with col1:
         height=100
     )
     
-    # Query type selection
-    query_type = st.selectbox(
+    # Query type selection with auto-detection option
+    query_type_options = [
+        "🤖 Auto-Detect (Recommended)",
+        "General Question",
+        "Direct Content Lookup",
+        "Cross-Paper Comparison", 
+        "Methodology Summary",
+        "Results Extraction",
+        "Conclusion Summary"
+    ]
+    
+    selected_query_type = st.selectbox(
         "Query Type:",
-        [
-            "General Question",
-            "Direct Content Lookup",
-            "Cross-Paper Comparison", 
-            "Methodology Summary",
-            "Results Extraction",
-            "Conclusion Summary"
-        ]
+        query_type_options,
+        help="Choose 'Auto-Detect' to let AI determine the best analysis type, or manually select a specific type"
     )
+    
+    # Convert selection to internal format
+    if selected_query_type == "🤖 Auto-Detect (Recommended)":
+        query_type = None  # Triggers auto-detection
+        st.info("💡 **Smart Mode**: AI will automatically determine the best analysis approach based on your question")
+    else:
+        query_type = selected_query_type
+        st.info(f"🎯 **Manual Mode**: Will use {selected_query_type} analysis")
     
     # Process query
     if st.button("🚀 Ask Question", type="primary", disabled=not query or not st.session_state.documents):
@@ -124,13 +136,21 @@ with col1:
                     # Generate response using query engine
                     response = st.session_state.query_engine.process_query(
                         query=query,
-                        query_type=query_type,
+                        query_type=query_type,  # None for auto-detect, or specific type
                         relevant_chunks=relevant_chunks,
                         documents=st.session_state.documents
                     )
                     
-                    # Display response
+                    # Display response with detected query type
                     st.subheader("💡 Response")
+                    
+                    # Show query type (detected or manual)
+                    final_query_type = response.get('query_type', 'General Question')
+                    if selected_query_type == "🤖 Auto-Detect (Recommended)":
+                        st.caption(f"🤖 **AI Detected**: {final_query_type}")
+                    else:
+                        st.caption(f"🎯 **Manual Selection**: {final_query_type}")
+                    
                     st.write(response['answer'])
                     
                     # Display sources with enhanced debugging info

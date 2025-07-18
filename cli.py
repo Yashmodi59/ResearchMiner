@@ -81,14 +81,14 @@ class ResearchPaperCLI:
         print(f"\nProcessed {successful}/{len(pdf_files)} documents successfully")
         return successful
     
-    def query_documents(self, query: str, query_type: str = "auto", top_k: int = 5) -> dict:
+    def query_documents(self, query: str, query_type: str = None, top_k: int = 5) -> dict:
         """Query the processed documents"""
         if not self.documents:
             print("Error: No documents loaded. Please process documents first.")
             return {}
             
         print(f"Searching for: '{query}'")
-        print("Retrieving relevant content...")
+        print("Auto-detecting query type and retrieving relevant content...")
         
         try:
             # Get relevant chunks
@@ -114,12 +114,18 @@ class ResearchPaperCLI:
             print(f"Error processing query: {str(e)}")
             return {}
     
-    def display_response(self, response: dict, show_sources: bool = True, show_debug: bool = False):
+    def display_response(self, response: dict, show_sources: bool = True, show_debug: bool = False, was_auto_detected: bool = True):
         """Display query response in formatted way"""
         if not response:
             return
             
         print("\n" + "="*80)
+        final_query_type = response.get('query_type', 'General Question')
+        if was_auto_detected:
+            print(f"QUERY TYPE AUTO-DETECTED: {final_query_type}")
+        else:
+            print(f"QUERY TYPE USED: {final_query_type}")
+        print("="*80)
         print("ANSWER:")
         print("="*80)
         print(response.get('answer', 'No answer generated'))
@@ -206,7 +212,7 @@ class ResearchPaperCLI:
                     print("  quit/exit/q - Exit interactive mode")
                 elif query:
                     response = self.query_documents(query)
-                    self.display_response(response)
+                    self.display_response(response, was_auto_detected=True)
                     
             except KeyboardInterrupt:
                 print("\nGoodbye!")
@@ -269,8 +275,9 @@ Examples:
         
         # Run query if provided
         if success and args.query:
-            response = cli.query_documents(args.query, args.query_type, args.top_k)
-            cli.display_response(response, args.show_sources, args.show_debug)
+            query_type_param = None if args.query_type == 'auto' else args.query_type
+            response = cli.query_documents(args.query, query_type_param, args.top_k)
+            cli.display_response(response, args.show_sources, args.show_debug, was_auto_detected=(args.query_type == 'auto'))
             
     elif args.command == 'process-dir':
         if not args.input:
@@ -281,16 +288,18 @@ Examples:
         
         # Run query if provided
         if count > 0 and args.query:
-            response = cli.query_documents(args.query, args.query_type, args.top_k)
-            cli.display_response(response, args.show_sources, args.show_debug)
+            query_type_param = None if args.query_type == 'auto' else args.query_type
+            response = cli.query_documents(args.query, query_type_param, args.top_k)
+            cli.display_response(response, args.show_sources, args.show_debug, was_auto_detected=(args.query_type == 'auto'))
             
     elif args.command == 'query':
         if not args.input:
             print("Error: Please provide a query")
             sys.exit(1)
         
-        response = cli.query_documents(args.input, args.query_type, args.top_k)
-        cli.display_response(response, args.show_sources, args.show_debug)
+        query_type_param = None if args.query_type == 'auto' else args.query_type
+        response = cli.query_documents(args.input, query_type_param, args.top_k)
+        cli.display_response(response, args.show_sources, args.show_debug, was_auto_detected=(args.query_type == 'auto'))
         
     elif args.command == 'list':
         cli.list_documents()

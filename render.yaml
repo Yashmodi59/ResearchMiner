@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: researchminer
+    env: python
+    buildCommand: |
+      # Install Java for tabula-py
+      apt-get update
+      apt-get install -y default-jre
+      pip install -r requirements.txt
+    startCommand: python run.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: JAVA_HOME
+        value: /usr/lib/jvm/default-java
