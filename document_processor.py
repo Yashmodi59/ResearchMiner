@@ -1,13 +1,20 @@
 import PyPDF2
 import pdfplumber
 import tabula
-import camelot
 import pandas as pd
 from PIL import Image
 import io
 import re
 from typing import Dict, List, Optional
 import logging
+
+# Try to import camelot, but make it optional for deployment compatibility
+try:
+    import camelot
+    CAMELOT_AVAILABLE = True
+except ImportError:
+    CAMELOT_AVAILABLE = False
+    logging.warning("Camelot not available - using pdfplumber and tabula for table extraction")
 
 class DocumentProcessor:
     """Handles PDF processing, text extraction, and OCR"""
@@ -304,9 +311,10 @@ class DocumentProcessor:
             tabula_tables = self._extract_tables_tabula(pdf_path)
             tables.extend(tabula_tables)
             
-            # Method 2: Use camelot for better table detection
-            camelot_tables = self._extract_tables_camelot(pdf_path)
-            tables.extend(camelot_tables)
+            # Method 2: Use camelot for better table detection (if available)
+            if CAMELOT_AVAILABLE:
+                camelot_tables = self._extract_tables_camelot(pdf_path)
+                tables.extend(camelot_tables)
             
             # Method 3: Use pdfplumber for table extraction
             pdfplumber_tables = self._extract_tables_pdfplumber(pdf_path)
@@ -340,8 +348,13 @@ class DocumentProcessor:
         return tables
     
     def _extract_tables_camelot(self, pdf_path: str) -> List[Dict]:
-        """Extract tables using camelot"""
+        """Extract tables using camelot (if available)"""
         tables = []
+        
+        if not CAMELOT_AVAILABLE:
+            logging.info("Camelot not available, skipping camelot table extraction")
+            return tables
+            
         try:
             # Use lattice method for tables with borders
             camelot_tables = camelot.read_pdf(pdf_path, pages='all', flavor='lattice')
