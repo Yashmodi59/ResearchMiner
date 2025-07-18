@@ -1,13 +1,29 @@
+# Deployment-ready requirements for ResearchMiner
+# Optimized for Python 3.11+ compatibility and production deployment
+
+# Core web framework
 streamlit>=1.28.0
-numpy>=1.24.0
-scikit-learn>=1.3.0
+
+# AI and ML libraries
 openai>=1.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+
+# PDF processing - core libraries
 PyPDF2>=3.0.0
 pdfplumber>=0.9.0
-tabula-py>=2.8.0
 Pillow>=10.0.0
-pandas>=2.0.0
-streamlit
-tabula
-camelot
-openpyxl
+
+# Table extraction - deployment compatible
+tabula-py>=2.8.0
+
+# Excel file support (alternative to camelot for some table functions)
+openpyxl>=3.1.0
+
+# Text processing utilities
+regex>=2023.0.0
+python-dateutil>=2.8.0
+
+# Optional: If camelot issues persist, remove and rely on tabula + pdfplumber
+# camelot-py[cv]==0.11.0

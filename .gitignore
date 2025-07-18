@@ -185,10 +185,14 @@ processing_*
 temp_*
 cache/
 
+
+
 # Platform-specific files (to be excluded)
 .replit
 replit.nix
 replit.md
 .upm/
 .cache/
-.pythonlibs/
+.pythonlibs
+attached_assets
+DEPLOYMENT_GUIDE.md
