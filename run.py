@@ -49,17 +49,31 @@ def main():
     # Check API key
     check_api_key()
     
-    # Launch Streamlit app
-    print("\n🚀 Launching web interface...")
-    print("📱 Access the application at: http://localhost:8501")
-    print("💡 Press Ctrl+C to stop the server")
+    # Get port from environment variable (for deployment) or use default
+    port = os.getenv('PORT', '8501')
+    
+    # Determine if running in production (Render, Heroku, etc.)
+    is_production = bool(os.getenv('PORT') or os.getenv('RENDER') or os.getenv('DYNO'))
+    
+    if is_production:
+        # Production deployment
+        address = "0.0.0.0"
+        print(f"\n🚀 Launching production server on port {port}...")
+    else:
+        # Local development
+        address = "localhost"
+        print(f"\n🚀 Launching web interface...")
+        print(f"📱 Access the application at: http://localhost:{port}")
+        print("💡 Press Ctrl+C to stop the server")
+    
     print("=" * 60)
     
     try:
         subprocess.run([
             sys.executable, "-m", "streamlit", "run", "app.py",
-            "--server.port", "8501",
-            "--server.address", "localhost"
+            "--server.port", port,
+            "--server.address", address,
+            "--server.headless", "true" if is_production else "false"
         ])
     except KeyboardInterrupt:
         print("\n👋 Shutting down ResearchMiner...")

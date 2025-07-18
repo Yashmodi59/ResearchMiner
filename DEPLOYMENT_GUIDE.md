@@ -67,7 +67,8 @@ streamlit run app.py
 ```bash
 # Use requirements-deploy.txt as your requirements.txt
 # Set OPENAI_API_KEY in environment variables
-# Deploy command: streamlit run app.py --server.port $PORT
+# Deploy command: python run.py
+# The run.py script automatically detects deployment environment and binds to 0.0.0.0:$PORT
 ```
 
 **Railway/Vercel:**
